@@ -46,10 +46,8 @@ class GeminiWrapper:
         self._refresh_model_cache()
         
         priority_order = [
-            "gemini-2.5-flash", "gemini-2.5-pro", 
-            "gemini-2.0-flash", "gemini-2.0-pro", 
-            "gemini-1.5-pro", "gemini-1.5-flash",
-            "gemini-pro" # fallback for older keys
+            "gemini-2.0-flash", 
+            "gemini-2.0-flash-exp"
         ]
 
         for preferred in priority_order:
