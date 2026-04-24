@@ -37,14 +37,36 @@
       width: 100%;
       background: var(--card);
       border-bottom: 1px solid var(--border);
-      padding: 18px 32px;
+      padding: 12px 32px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 12px;
     }
+    .header-left { display: flex; align-items: center; gap: 12px; }
     header .logo { font-size: 1.5rem; }
     header h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.3px; }
     header span { color: var(--accent); }
+
+    .api-key-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card2);
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      max-width: 300px;
+    }
+    .api-key-box input {
+      border: none;
+      background: transparent;
+      padding: 4px;
+      font-size: 0.8rem;
+      width: 180px;
+      box-shadow: none !important;
+    }
+    .api-key-box span { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
 
     /* ── Wizard container ── */
     .wizard {
@@ -365,10 +387,16 @@
   </div>
 </div>
 
-<header>
-  <div class="logo">📋</div>
-  <h1>OJT <span>Journal Maker</span></h1>
-  <div style="margin-left: auto;">
+  <header>
+    <div class="header-left">
+      <div class="logo">🚀</div>
+      <h1>OJT Journal <span>Maker</span></h1>
+    </div>
+    <div class="api-key-box">
+      <span>Gemini API Key:</span>
+      <input type="password" id="gemini_api_key" placeholder="Paste your key here..." onchange="saveApiKey()" />
+    </div>
+    <div style="margin-left: auto;">
     <button id="downloadTemplateBtn" style="
       background: var(--accent);
       color: white;
@@ -575,13 +603,7 @@
         <textarea id="work-desc" rows="5" placeholder="Describe the overall work you did during the OJT. The AI will split it into daily tasks..."></textarea>
       </div>
 
-      <div class="full">
-        <label>Gemini API Key</label>
-        <div class="api-row">
-          <input type="password" id="api-key" placeholder="AIza…" autocomplete="off" />
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Get API key ↗</a>
-        </div>
-      </div>
+
     </div>
 
     <button class="btn btn-primary" id="btn-upload" onclick="handleUpload()">
@@ -679,7 +701,29 @@
   let pollInterval = null;
   const STORAGE_KEY = 'ojt_form_data';
   const STORAGE_TIMESTAMP_KEY = 'ojt_form_timestamp';
+  const API_KEY_STORAGE_KEY = 'gemini_api_key';
   const STORAGE_TTL_MS = 1800000; // 30 minutes
+
+  // ── API Key Helpers ──
+  function saveApiKey() {
+    const key = document.getElementById('gemini_api_key').value;
+    localStorage.setItem(API_KEY_STORAGE_KEY, key);
+  }
+
+  function loadApiKey() {
+    const savedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+    if (savedKey) {
+      document.getElementById('gemini_api_key').value = savedKey;
+    }
+  }
+
+  // Load key on startup
+  window.addEventListener('DOMContentLoaded', loadApiKey);
+
+  function getApiKey() {
+    const key = document.getElementById('gemini_api_key').value.trim() || localStorage.getItem(API_KEY_STORAGE_KEY);
+    return key ? key.trim() : '';
+  }
 
   // ── localStorage Helpers ──
   function saveFormDataToStorage() {
@@ -1174,11 +1218,12 @@
     if (!val('department'))  return showError('error-1', 'Please enter department.');
     if (!val('designation')) return showError('error-1', 'Please enter designation.');
     if (!val('work-desc'))   return showError('error-1', 'Please describe the work done.');
-    if (!val('api-key'))     return showError('error-1', 'Please enter your Gemini API key.');
+    const apiKey = getApiKey();
+    if (!apiKey)             return showError('error-1', 'Please enter your Gemini API key in the header.');
 
     setLoading('spinner-1', 'btn-upload', 'btn-upload-text', true, 'Processing…');
 
-    currentApiKey = val('api-key');
+    currentApiKey = apiKey;
     const fd = new FormData();
     fd.append('pdf_file', pdfFile);
     fd.append('start_date', val('start-date'));
