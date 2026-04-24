@@ -9,7 +9,7 @@ class GeminiServiceError(Exception):
     """Raised when Gemini request fails after retries/fallbacks."""
 
 
-DEFAULT_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro"]
+DEFAULT_MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"]
 
 
 # ─────────────────────────────────────────────
