@@ -1,15 +1,12 @@
-import google.generativeai as genai
 import json
 import re
 import time
 from datetime import datetime
+from gemini_wrapper import generate_with_gemini
 
 
 class GeminiServiceError(Exception):
     """Raised when Gemini request fails after retries/fallbacks."""
-
-
-DEFAULT_MODELS = ["gemini-2.0-flash-exp"]
 
 
 # ─────────────────────────────────────────────
@@ -29,60 +26,22 @@ def format_date(date_str: str) -> str:
 
 
 # ─────────────────────────────────────────────
-# ✅ SAFE GEMINI CALL (handles retries + model fallback)
+# ✅ SAFE GEMINI CALL (using new gemini_wrapper)
 # ─────────────────────────────────────────────
-def call_gemini(api_key: str, prompt: str, retries=3, models=None):
-    genai.configure(api_key=api_key)
-    model_names = models or DEFAULT_MODELS
-    last_error = None
+def call_gemini(api_key: str, prompt: str):
+    """Bridge to the robust gemini_wrapper."""
+    try:
+        text = generate_with_gemini(api_key, prompt)
+        
+        if not text:
+            raise ValueError("Gemini returned an empty response")
 
-    for model_name in model_names:
-        print(f"Trying Gemini model: {model_name}...")
-        model = genai.GenerativeModel(model_name)
-
-        for attempt in range(retries):
-            try:
-                response = model.generate_content(
-                    prompt,
-                    generation_config={
-                        "temperature": 0.4,
-                        "top_p": 0.9,
-                    }
-                )
-
-                text = (getattr(response, "text", "") or "").strip()
-                if not text:
-                    raise ValueError("Gemini returned an empty response")
-
-                text = re.sub(r'^```(?:json)?\s*', '', text)
-                text = re.sub(r'\s*```$', '', text)
-                return text
-
-            except Exception as e:
-                last_error = e
-                msg = str(e).lower()
-
-                transient = any(token in msg for token in [
-                    "429", "500", "503", "504", "timeout", "deadline", "resource_exhausted", "temporarily unavailable"
-                ])
-                model_unavailable = any(token in msg for token in [
-                    "404", "not found", "not supported", "unknown model", "unsupported model"
-                ])
-
-                if attempt < retries - 1 and transient:
-                    time.sleep(min(5 * (attempt + 1), 20))
-                    continue
-
-                # Try next model when current model is unavailable
-                if model_unavailable:
-                    break
-
-                # Non-transient error should stop immediately with clear context
-                raise GeminiServiceError(f"Gemini API error ({model_name}): {e}") from e
-
-    raise GeminiServiceError(
-        f"Gemini failed after retries/fallback. Last error: {last_error}"
-    )
+        # Cleanup JSON formatting
+        text = re.sub(r'^```(?:json)?\s*', '', text)
+        text = re.sub(r'\s*```$', '', text)
+        return text.strip()
+    except Exception as e:
+        raise GeminiServiceError(f"Gemini processing error: {e}")
 
 
 # ─────────────────────────────────────────────
