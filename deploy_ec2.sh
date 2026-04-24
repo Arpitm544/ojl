@@ -30,6 +30,8 @@ apt-get update
 apt-get install -y python3 python3-pip python3-venv nginx curl
 
 # 2. Set up Python Virtual Environment
+# Navigate to the backend directory where requirements.txt is located
+cd "$(dirname "$0")/backend"
 APP_DIR=$(pwd)
 echo "🐍 Setting up Python Virtual Environment in $APP_DIR..."
 
