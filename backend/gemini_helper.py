@@ -9,7 +9,7 @@ class GeminiServiceError(Exception):
     """Raised when Gemini request fails after retries/fallbacks."""
 
 
-DEFAULT_MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"]
+DEFAULT_MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"]
 
 
 # ─────────────────────────────────────────────
@@ -37,6 +37,7 @@ def call_gemini(api_key: str, prompt: str, retries=3, models=None):
     last_error = None
 
     for model_name in model_names:
+        print(f"Trying Gemini model: {model_name}...")
         model = genai.GenerativeModel(model_name)
 
         for attempt in range(retries):
