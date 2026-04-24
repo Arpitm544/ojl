@@ -27,7 +27,7 @@ echo "🚀 Starting Deployment Setup..."
 # 1. Update and install dependencies
 echo "📦 Installing system dependencies..."
 apt-get update
-apt-get install -y python3 python3-pip python3-venv nginx curl
+apt-get install -y python3 python3-pip python3-venv nginx curl certbot python3-certbot-nginx
 
 # 2. Set up Python Virtual Environment
 # Navigate to the backend directory where requirements.txt is located
@@ -59,7 +59,7 @@ User=ubuntu
 Group=www-data
 WorkingDirectory=$APP_DIR
 Environment="PATH=$APP_DIR/venv/bin"
-ExecStart=$APP_DIR/venv/bin/gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind unix:ojt-backend.sock -m 007
+ExecStart=$APP_DIR/venv/bin/gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 127.0.0.1:8000 -m 007
 
 [Install]
 WantedBy=multi-user.target
@@ -80,12 +80,12 @@ NGINX_CONF="/etc/nginx/sites-available/ojt-backend"
 cat <<EOF > $NGINX_CONF
 server {
     listen 80;
-    server_name _; # Accepts any IP/domain. Change this to your domain if you have one.
+    server_name ojl-backend.tasknest.tech;
 
     client_max_body_size 100M; # Allow large PDF uploads
 
     location / {
-        proxy_pass http://unix:$APP_DIR/ojt-backend.sock;
+        proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -102,6 +102,10 @@ rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl restart nginx
 
+# 5. Configure SSL
+echo "🔒 Configuring SSL with Let's Encrypt..."
+certbot --nginx -n --agree-tos --email arpitbabu802@gmail.com -d ojl-backend.tasknest.tech
+
 echo "🎉 Deployment Complete!"
-echo "Your API is now running and accessible on port 80 of your EC2 instance's public IP."
-echo "Don't forget to update your frontend's API_BASE_URL to point to this EC2's IP!"
+echo "Your API is now securely running at https://ojl-backend.tasknest.tech"
+echo "Don't forget to update your frontend's API_BASE_URL to point to this secure URL!"
