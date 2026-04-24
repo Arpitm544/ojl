@@ -33,12 +33,7 @@ app = FastAPI(title="OJT Journal Maker")
 # Configure for larger uploads (50MB limit)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8080",
-        "http://localhost:3000",
-        "https://ojl-hazel.vercel.app",
-        "https://ojl.tasknest.tech"
-    ],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
